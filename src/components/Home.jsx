@@ -1,33 +1,17 @@
+import React from "react";
 import { useState } from "react";
-import { BsCardImage } from "react-icons/bs";
 import ImageData from "../shared/ImageData";
+import ImageUpload from "./ImageUpload";
+import Header from "./Header";
 
 const Home = () => {
   const [images, setImages] = useState(ImageData);
-
   const [selectedImages, setSelectedImages] = useState([]);
-
   const [draggedIndex, setDraggedIndex] = useState(null);
-
-  const handleImageChange = (e) => {
-    const uploadedImage = e.target.files;
-
-    const newImages = Array.from(uploadedImage).map((file, index) => {
-      const id = images.length + index + 1;
-      const src = URL.createObjectURL(file);
-
-      return { id, src };
-    });
-
-    setImages([...images, ...newImages]);
-    console.log(images);
-  };
-
   const handleDraggingStart = (e, index) => {
     e.dataTransfer.setData("text/plain", index);
     setDraggedIndex(index);
   };
-
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     const indexNo = e.dataTransfer.getData("text/plain");
@@ -42,10 +26,7 @@ const Home = () => {
     } else {
       allImages.splice(dropIndex, 0, draggedImage);
     }
-
-    // allImages.splice(dropIndex, 0, draggedImage);
     setImages(allImages);
-
     setDraggedIndex(null);
   };
 
@@ -63,7 +44,19 @@ const Home = () => {
       }
     });
   };
+  const handleImageChange = (e) => {
+    const uploadedImage = e.target.files;
 
+    const newImages = Array.from(uploadedImage).map((file, index) => {
+      const id = images.length + index + 1;
+      const src = URL.createObjectURL(file);
+
+      return { id, src };
+    });
+
+    setImages([...images, ...newImages]);
+    console.log(images);
+  };
   const handleDeleteSelected = () => {
     const updatedImages = images.filter(
       (image) => !selectedImages.includes(image.id)
@@ -74,80 +67,74 @@ const Home = () => {
 
   return (
     <div className="">
-      <div className="h-screen">
-        <div className=" px-10 flex justify-between">
-          <div className="flex">
-            <input type="checkbox" />
-            <h1 className="text-xl font-bold ps-2">
-              {selectedImages.length > 0
-                ? `${selectedImages.length} Files Selected`
-                : "Gallery"}
-            </h1>
-          </div>
-          <div
-            className="text-xl font-semibold  hover:cursor-pointer text-red-500"
-            onClick={handleDeleteSelected}
-          >
-            Delete Files
-          </div>
-        </div>
-        <hr className="my-2 mx-10 " />
-        <div className=" max-h-screen p-10 pt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 ">
-          {images.map((image, index) => (
-            <div
-              key={image.id}
-              className={`group relative hover:bg-slate-100 rounded-lg border border-slate-400 
-              
-              
-              ${index === 0 ? " col-span-2 row-span-2" : ""} ${
-                // selectedImages.includes(image.id) ||
-                draggedIndex && draggedIndex < index
-                  ? "bg-slate-100 transition-all transform translate-x-full  "
-                  : ""
-              }`}
-              draggable
-              onDragStart={(e) => handleDraggingStart(e, index)}
-              onDrop={(e) => handleDrop(e, index)}
-              onDragOver={(e) => handleDraggingComplete(e)}
-            >
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  className={`w-4 h-4   ms-2 mt-2 group-hover:opacity-100 cursor-pointer ${
-                    selectedImages.includes(image.id)
-                      ? "opacity-100"
-                      : "opacity-0"
-                  }`}
-                  onChange={() => handleCheckboxChange(image.id)}
-                />
+      <div className="">
+        <div className="">
+          <Header
+            handleDeleteSelected={handleDeleteSelected}
+            selectedImages={selectedImages}
+          />
 
-                <img
-                  src={image.src}
-                  className={`rounded-lg hover:cursor-pointer hover:opacity-50 hover:bg-slate-100 max-h-full max-w-full ${
-                    selectedImages.includes(image.id) || draggedIndex === index
-                      ? "opacity-50 bg-slate-100"
+          <div
+            className="  max-h-screen p-10 pt-2 grid grid-cols-2  md:grid-cols-3 lg:grid-cols-5  grid-flow-row-dense gap-6 "
+            onDragOver={(e) => handleDraggingComplete(e)}
+          >
+            {images.map((image, index) => (
+              <div
+                key={image.id}
+                className={`group relative hover:bg-slate-100 rounded-lg border border-slate-400
+
+              ${
+                index === 0
+                  ? " col-span-2 row-span-2 "
+                  : "col-span-1 row-span-1"
+              }
+
+              ${
+                // selectedImages.includes(image.id) ||
+                draggedIndex && draggedIndex < index ? " " : ""
+              }
+              `}
+                draggable
+                onDragStart={(e) => handleDraggingStart(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragOver={(e) => handleDraggingComplete(e)}
+              >
+                <div
+                  className={`relative ${
+                    draggedIndex && draggedIndex < index
+                      ? " transition-all  transform ease-linear  translate-x-[110%] grid-flow-row-dense"
                       : ""
                   }`}
-                  alt=""
-                />
-              </div>
-            </div>
-          ))}
+                >
+                  <img
+                    src={image.src}
+                    className={`rounded-lg hover:cursor-pointer hover:opacity-50 hover:bg-slate-100    object-cover w-full h-full
 
-          <div className="relative bg-gray-300 group hover:bg-slate-100 rounded-lg border border-dashed border-black  ">
-            <input
-              type="file"
-              multiple
-              name="images"
-              className="absolute h-full bg-red-700 w-full opacity-0 cursor-pointer"
-              accept=".webp, .jpeg, .jpg "
-              onChange={handleImageChange}
-            />
-            {/* <div className="absolute top-32 left-32"> */}
-            <div className=" flex flex-col items-center justify-center w-full h-full top-0 left-0">
-              <BsCardImage className=" text-3xl my-2" />
-              <h1 className="text-lg font-semibold">Add Images</h1>
-            </div>
+                  ${
+                    selectedImages.includes(image.id)
+                      ? "opacity-50 bg-slate-100 "
+                      : ""
+                  }
+                  `}
+                    alt=""
+                  />
+
+                  <div className="absolute top-0">
+                    <input
+                      type="checkbox"
+                      className={`w-6 h-6   ms-2 mt-2 group-hover:opacity-100 cursor-pointer  ${
+                        selectedImages.includes(image.id)
+                          ? "opacity-100"
+                          : "opacity-0"
+                      }`}
+                      onChange={() => handleCheckboxChange(image.id)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <ImageUpload handleImageChange={handleImageChange} />
           </div>
         </div>
       </div>
