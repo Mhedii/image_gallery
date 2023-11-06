@@ -1,37 +1,57 @@
 import { useState } from "react";
 import { BsCardImage } from "react-icons/bs";
+import ImageData from "../shared/ImageData";
 
 const Home = () => {
-  const [images, setImages] = useState([
-    { id: "image-1", src: "/images/image-1.webp" },
-    { id: "image-2", src: "/images/image-2.webp" },
-    { id: "image-3", src: "/images/image-3.webp" },
-    { id: "image-4", src: "/images/image-4.webp" },
-    { id: "image-5", src: "/images/image-5.webp" },
-    { id: "image-6", src: "/images/image-6.webp" },
-    { id: "image-7", src: "/images/image-7.webp" },
-    { id: "image-8", src: "/images/image-8.webp" },
-    { id: "image-9", src: "/images/image-9.webp" },
-    { id: "image-10", src: "/images/image-10.jpeg" },
-    { id: "image-11", src: "/images/image-11.jpeg" },
-  ]);
+  const [images, setImages] = useState(ImageData);
+
   const [selectedImages, setSelectedImages] = useState([]);
+
+  const [draggedIndex, setDraggedIndex] = useState(null);
+
+  const handleImageChange = (e) => {
+    const uploadedImage = e.target.files;
+
+    const newImages = Array.from(uploadedImage).map((file, index) => {
+      const id = images.length + index + 1;
+      const src = URL.createObjectURL(file);
+
+      return { id, src };
+    });
+
+    setImages([...images, ...newImages]);
+    console.log(images);
+  };
+
   const handleDraggingStart = (e, index) => {
     e.dataTransfer.setData("text/plain", index);
+    setDraggedIndex(index);
   };
 
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     const indexNo = e.dataTransfer.getData("text/plain");
+
+    if (indexNo === "") return;
+
     const allImages = [...images];
     const draggedImage = allImages[indexNo];
     allImages.splice(indexNo, 1);
-    allImages.splice(dropIndex, 0, draggedImage);
+    if (dropIndex >= allImages.length) {
+      allImages.push(draggedImage);
+    } else {
+      allImages.splice(dropIndex, 0, draggedImage);
+    }
+
+    // allImages.splice(dropIndex, 0, draggedImage);
     setImages(allImages);
+
+    setDraggedIndex(null);
   };
 
   const handleDraggingComplete = (e) => {
     e.preventDefault();
+    e?.target?.children[0]?.alt && setDraggedIndex(e?.target?.children[0]?.alt);
   };
 
   const handleCheckboxChange = (imageId) => {
@@ -53,13 +73,15 @@ const Home = () => {
   };
 
   return (
-    <div>
+    <div className="">
       <div className="h-screen">
         <div className=" px-10 flex justify-between">
           <div className="flex">
             <input type="checkbox" />
             <h1 className="text-xl font-bold ps-2">
-              {selectedImages.length} Files Selected
+              {selectedImages.length > 0
+                ? `${selectedImages.length} Files Selected`
+                : "Gallery"}
             </h1>
           </div>
           <div
@@ -70,13 +92,19 @@ const Home = () => {
           </div>
         </div>
         <hr className="my-2 mx-10 " />
-        <div className="min-h-screen max-h-screen p-10 pt-2 grid grid-cols-5 gap-6">
+        <div className=" max-h-screen p-10 pt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 ">
           {images.map((image, index) => (
             <div
               key={image.id}
-              className={`group relative hover:bg-slate-100 rounded-lg border border-slate-400 ${
-                index === 0 ? " col-span-2 row-span-2" : ""
-              } ${selectedImages.includes(image.id) ? "bg-slate-100" : ""}`}
+              className={`group relative hover:bg-slate-100 rounded-lg border border-slate-400 
+              
+              
+              ${index === 0 ? " col-span-2 row-span-2" : ""} ${
+                // selectedImages.includes(image.id) ||
+                draggedIndex && draggedIndex < index
+                  ? "bg-slate-100 transition-all transform translate-x-full  "
+                  : ""
+              }`}
               draggable
               onDragStart={(e) => handleDraggingStart(e, index)}
               onDrop={(e) => handleDrop(e, index)}
@@ -96,7 +124,7 @@ const Home = () => {
                 <img
                   src={image.src}
                   className={`rounded-lg hover:cursor-pointer hover:opacity-50 hover:bg-slate-100 max-h-full max-w-full ${
-                    selectedImages.includes(image.id)
+                    selectedImages.includes(image.id) || draggedIndex === index
                       ? "opacity-50 bg-slate-100"
                       : ""
                   }`}
@@ -109,8 +137,11 @@ const Home = () => {
           <div className="relative bg-gray-300 group hover:bg-slate-100 rounded-lg border border-dashed border-black  ">
             <input
               type="file"
+              multiple
+              name="images"
               className="absolute h-full bg-red-700 w-full opacity-0 cursor-pointer"
               accept=".webp, .jpeg, .jpg "
+              onChange={handleImageChange}
             />
             {/* <div className="absolute top-32 left-32"> */}
             <div className=" flex flex-col items-center justify-center w-full h-full top-0 left-0">
